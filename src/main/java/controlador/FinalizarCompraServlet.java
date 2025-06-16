@@ -71,6 +71,9 @@ public class FinalizarCompraServlet extends HttpServlet {
 
                         // Usamos el método que ya teníamos para actualizar la BD y la caché del producto.
                         productoService.realizarVenta(productoId, cantidadComprada);
+                        // Le decimos a Redis que incremente el score del producto vendido
+        // en la cantidad que se compró.
+        jedis.zincrby("ranking:mas_vendidos", cantidadComprada, "producto:" + productoId);
                     }
 
                     // 4. Limpiamos el carrito del usuario en Redis

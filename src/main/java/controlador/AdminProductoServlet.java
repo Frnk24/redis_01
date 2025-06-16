@@ -77,6 +77,7 @@ protected void doPost(HttpServletRequest request, HttpServletResponse response)
                 }
 
                 // ¡Notificamos a los clientes a través del WebSocket!
+                
                 ProductoWebSocketServer.notificarActualizacion();
                 
                 exito = true;
