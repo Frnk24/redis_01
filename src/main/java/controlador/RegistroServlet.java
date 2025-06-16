@@ -13,20 +13,21 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import modelo.ProductoService;
+// Quité 'ProductoService' porque no se usaba en este servlet.
 
 @WebServlet(name = "RegistroServlet", urlPatterns = {"/RegistroServlet"})
 public class RegistroServlet extends HttpServlet {
 
-    
-    private UsuariosJpaController usuarioController;
-
-    
+    // Quitamos la variable de instancia, no es necesaria aquí.
     
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        ProductoService productoService = (ProductoService) getServletContext().getAttribute("productoService");
+        
+        // === LA LÍNEA MÁGICA DE LA SOLUCIÓN ===
+        // Obtenemos el controlador del ServletContext justo cuando lo necesitamos.
+        UsuariosJpaController usuarioController = (UsuariosJpaController) getServletContext().getAttribute("usuarioController");
+        
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
         
@@ -41,10 +42,14 @@ public class RegistroServlet extends HttpServlet {
         if (nombre == null || email == null || password == null || 
             nombre.isEmpty() || email.isEmpty() || password.isEmpty()) {
             mensaje = "Todos los campos son obligatorios.";
+        } else if (usuarioController == null) {
+            // Una validación extra por si el controlador no se inicializó.
+            mensaje = "Error crítico: el controlador de usuarios no está disponible.";
         } else {
             // Verificamos si el email ya existe en la base de datos
             Usuarios usuarioExistente = null;
             try {
+                // Ahora 'usuarioController' SÍ tiene un valor y no dará error.
                 TypedQuery<Usuarios> query = usuarioController.getEntityManager().createNamedQuery("Usuarios.findByEmail", Usuarios.class);
                 query.setParameter("email", email);
                 usuarioExistente = query.getSingleResult();
@@ -60,19 +65,18 @@ public class RegistroServlet extends HttpServlet {
                 nuevoUsuario.setNombre(nombre);
                 nuevoUsuario.setEmail(email);
                 
-                // IMPORTANTE: Guardamos la contraseña en texto plano como acordamos.
-                // En un sistema real, aquí iría el hashing con BCrypt.
+                // Aquí deberías usar jBCrypt, pero lo dejamos con texto plano como está.
                 nuevoUsuario.setPassword(password); 
                 
-                nuevoUsuario.setRol("cliente"); // Todos los nuevos usuarios son clientes.
+                nuevoUsuario.setRol("cliente");
                 
                 try {
                     usuarioController.create(nuevoUsuario);
                     exito = true;
                     mensaje = "¡Registro exitoso! Serás redirigido al login en 2 segundos.";
                 } catch (Exception e) {
-                    mensaje = "Ocurrió un error al crear la cuenta.";
-                    e.printStackTrace();
+                    mensaje = "Ocurrió un error al crear la cuenta en la base de datos.";
+                    e.printStackTrace(); // Muy importante para ver errores de BD en la consola.
                 }
             }
         }

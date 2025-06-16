@@ -35,6 +35,9 @@ public void doFilter(ServletRequest request, ServletResponse response, FilterCha
     // Páginas públicas que no requieren login
     boolean isPublicPage = path.equals("/index.html") || 
                            path.equals("/LoginServlet") ||
+                           path.equals("/registro.html") || 
+                           path.equals("/RegistroServlet") ||
+                           path.startsWith("/img/") ||
                            path.startsWith("/recursos/"); // Asumiendo que guardas CSS/JS en /recursos/
 
     if (isPublicPage) {

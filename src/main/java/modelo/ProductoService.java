@@ -52,7 +52,7 @@ public Productos obtenerProductoPorId(int id) {
             // OJO: Tu DTO usa BigDecimal, así que creamos un BigDecimal desde el String.
             producto.setPrecio(new java.math.BigDecimal(productoMap.get("precio"))); 
             producto.setStock(Integer.parseInt(productoMap.get("stock")));
-            
+            producto.setImagenUrl(productoMap.get("imagenUrl"));
             return producto;
 
         } else {
@@ -69,7 +69,7 @@ public Productos obtenerProductoPorId(int id) {
                 nuevoProductoMap.put("nombre", productoDeDB.getNombre());
                 nuevoProductoMap.put("precio", productoDeDB.getPrecio().toPlainString()); // Convertimos BigDecimal a String
                 nuevoProductoMap.put("stock", String.valueOf(productoDeDB.getStock()));
-                
+                if (productoDeDB.getImagenUrl() != null) { nuevoProductoMap.put("imagenUrl", productoDeDB.getImagenUrl()); }
                 // El comando 'hset' guarda el mapa completo en la clave del Hash.
                 jedis.hset(redisKey, nuevoProductoMap);
                 

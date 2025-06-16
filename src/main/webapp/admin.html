@@ -3,52 +3,153 @@
 <head>
     <meta charset="UTF-8">
     <title>Panel de Administración</title>
+
+    <!-- === INICIO DE LOS ESTILOS CSS (MODO OSCURO MINIMALISTA) === -->
     <style>
-        body { font-family: sans-serif; max-width: 900px; margin: 40px auto; padding: 20px; }
-        h1 { color: #d9534f; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        th { background-color: #f2f2f2; }
-        .btn-edit { background-color: #5bc0de; color: white; padding: 5px 10px; border: none; cursor: pointer; border-radius: 3px; }
-        .logout-btn { display: inline-block; margin-top: 20px; padding: 10px 15px; background-color: #f0ad4e; color: white; text-decoration: none; border-radius: 4px; }
-        
-        /* Estilos para el modal de edición */
-        .modal { display: none; position: fixed; z-index: 1; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.4); }
-        .modal-content { background-color: #fefefe; margin: 15% auto; padding: 20px; border: 1px solid #888; width: 80%; max-width: 500px; border-radius: 5px; }
-        .close { color: #aaa; float: right; font-size: 28px; font-weight: bold; }
-        .close:hover, .close:focus { color: black; text-decoration: none; cursor: pointer; }
-        .form-group { margin-bottom: 15px; }
-        label { display: block; }
-        input { width: 100%; padding: 8px; box-sizing: border-box; }
+        /* --- ESTILOS GLOBALES Y FONDO --- */
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            margin: 0;
+            padding: 40px 20px;
+            background-color: #121212;
+            color: #e0e0e0;
+        }
+
+        .admin-container {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        /* --- CABECERA (TÍTULO Y BOTONES SUPERIORES) --- */
+        .admin-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap; /* Para pantallas pequeñas */
+        }
+
+        h1 {
+            color: #ffffff;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        /* --- ESTILOS GENERALES DE BOTONES --- */
+        .btn {
+            padding: 8px 15px; /* Ligeramente más pequeños para la tabla */
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            display: inline-block;
+            margin-left: 5px; /* Espacio entre botones */
+        }
+        .btn:first-child { margin-left: 0; }
+        .admin-header .btn { padding: 10px 20px; } /* Botones de cabecera más grandes */
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+        }
+        .btn-primary { background-color: #28a745; color: white; } /* Verde para Crear */
+        .btn-primary:hover { background-color: #218838; }
+        .btn-warning { background-color: #f0ad4e; color: white; } /* Naranja para Cerrar Sesión */
+        .btn-warning:hover { background-color: #ec971f; }
+        .btn-info { background-color: #5bc0de; color: white; } /* Azul para Editar */
+        .btn-info:hover { background-color: #31b0d5; }
+        .btn-danger { background-color: #e74c3c; color: white; } /* Rojo para Eliminar */
+        .btn-danger:hover { background-color: #c0392b; }
+
+        /* --- TABLA DE PRODUCTOS --- */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background-color: #1e1e1e;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        th, td {
+            padding: 15px 20px;
+            text-align: left;
+            border-bottom: 1px solid #333;
+        }
+        thead tr { background-color: #2c2c2c; }
+        th { font-weight: 600; color: #ffffff; text-transform: uppercase; font-size: 12px; }
+        tbody tr:last-child td { border-bottom: none; }
+        tbody tr:hover { background-color: #2a2a2a; }
+
+        /* --- MODAL DE EDICIÓN / CREACIÓN --- */
+        .modal {
+            display: none; /* Oculto por defecto */
+            position: fixed;
+            z-index: 1000;
+            left: 0; top: 0;
+            width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0; /* Para la animación */
+            transition: opacity 0.3s ease;
+            pointer-events: none; /* Para no poder interactuar cuando está oculto */
+        }
+        .modal.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .modal-content { background-color: #2c2c2c; padding: 30px; border: 1px solid #444; width: 90%; max-width: 500px; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); transform: scale(0.95); transition: transform 0.3s ease; }
+        .modal.active .modal-content { transform: scale(1); }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #444; padding-bottom: 15px; margin-bottom: 20px; }
+        .modal-header h2 { margin: 0; color: #ffffff; }
+        .close { color: #aaa; font-size: 32px; font-weight: bold; line-height: 1; }
+        .close:hover, .close:focus { color: #fff; text-decoration: none; cursor: pointer; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; font-weight: 500; color: #a0a0a0; }
+        input[type="text"], input[type="number"] { width: 100%; padding: 12px; border: 1px solid #444; border-radius: 6px; background-color: #1e1e1e; color: #e0e0e0; font-size: 16px; box-sizing: border-box; }
+        input:focus { outline: none; border-color: #5bc0de; }
     </style>
 </head>
 <body>
-    <h1>Panel de Administración - Gestión de Productos</h1>
-<button onclick="openCreateModal()">Crear Nuevo Producto</button>
-    <a href="LogoutServlet" class="logout-btn">Cerrar Sesión</a>
 
-    <div id="product-list">
-        <table>
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Nombre</th>
-                    <th>Precio</th>
-                    <th>Stock</th>
-                    <th>Acciones</th>
-                </tr>
-            </thead>
-            <tbody id="product-table-body">
-                <!-- Los productos se cargarán aquí con JavaScript -->
-            </tbody>
-        </table>
+    <div class="admin-container">
+        <div class="admin-header">
+            <h1>Gestión de Productos</h1>
+            <div>
+                <button class="btn btn-primary" onclick="openCreateModal()">Crear Nuevo Producto</button>
+                <a href="LogoutServlet" class="btn btn-warning">Cerrar Sesión</a>
+            </div>
+        </div>
+        <div id="product-list">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nombre</th>
+                        <th>Precio</th>
+                        <th>Stock</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="product-table-body">
+                    <!-- Los productos se cargarán aquí con JavaScript -->
+                </tbody>
+            </table>
+        </div>
     </div>
 
-    <!-- El Modal para Editar -->
+    <!-- El Modal para Editar / Crear -->
     <div id="editModal" class="modal">
       <div class="modal-content">
-        <span class="close" onclick="closeModal()">×</span>
-        <h2>Editar Producto</h2>
+        <div class="modal-header">
+            <h2 id="modal-title">Editar Producto</h2>
+            <span class="close" onclick="closeModal()">×</span>
+        </div>
         <form id="edit-form">
             <input type="hidden" id="edit-id" name="id">
             <div class="form-group">
@@ -63,19 +164,23 @@
                 <label for="edit-stock">Stock:</label>
                 <input type="number" id="edit-stock" name="stock" required>
             </div>
-            <button type="submit">Guardar Cambios</button>
+            <div class="form-group">
+                <label for="edit-imagen">Nombre del Archivo de Imagen (ej: mi-producto.jpg):</label>
+                <input type="text" id="edit-imagen" name="imagenUrl" placeholder="Dejar en blanco si no tiene imagen">
+            </div>
+            <button type="submit" class="btn btn-primary">Guardar Cambios</button>
         </form>
       </div>
     </div>
 
+
     <script>
-        // --- LÓGICA PARA CARGAR Y MOSTRAR LOS PRODUCTOS ---
         function loadProducts() {
-            fetch('admin/productos') // Hacemos GET a nuestro nuevo servlet
+            fetch('admin/productos')
                 .then(response => response.json())
                 .then(products => {
                     const tableBody = document.getElementById('product-table-body');
-                    tableBody.innerHTML = ''; // Limpiamos la tabla
+                    tableBody.innerHTML = '';
                     products.forEach(product => {
                         const row = `
                             <tr>
@@ -83,7 +188,10 @@
                                 <td>${product.nombre}</td>
                                 <td>S/ ${product.precio.toFixed(2)}</td>
                                 <td>${product.stock}</td>
-                                <td><button class="btn-edit" onclick='openModal(${JSON.stringify(product)})'>Editar</button></td>
+                                <td>
+                                    <button class="btn btn-info" onclick='openModal(${JSON.stringify(product)})'>Editar</button>
+                                    <button class="btn btn-danger" onclick='deleteProduct(${product.id})'>Eliminar</button>
+                                </td>
                             </tr>
                         `;
                         tableBody.innerHTML += row;
@@ -91,45 +199,64 @@
                 });
         }
         
-       // --- LÓGICA DEL MODAL (AHORA PUEDE CREAR O EDITAR) ---
-const modal = document.getElementById('editModal');
-const modalTitle = document.querySelector('#editModal h2');
-const editForm = document.getElementById('edit-form');
-const idInput = document.getElementById('edit-id');
-
-// NUEVA función para abrir el modal en modo CREACIÓN
-function openCreateModal() {
-    modalTitle.textContent = 'Crear Nuevo Producto';
-    editForm.reset(); // Limpia el formulario
-    idInput.value = ''; // Aseguramos que el ID esté vacío
-    modal.style.display = 'block';
-}
-
-// MODIFICAMOS la función para abrir el modal en modo EDICIÓN
-function openModal(product) {
-    modalTitle.textContent = 'Editar Producto';
-    editForm.reset();
-    idInput.value = product.id;
-    document.getElementById('edit-nombre').value = product.nombre;
-    document.getElementById('edit-precio').value = product.precio.toFixed(2);
-    document.getElementById('edit-stock').value = product.stock;
-    modal.style.display = 'block';
-}
-        function closeModal() {
-            modal.style.display = "none";
+        function deleteProduct(productId) {
+            if (!confirm(`¿Estás seguro de que quieres eliminar el producto con ID ${productId}? Esta acción no se puede deshacer.`)) return;
+            
+            fetch(`admin/productos?id=${productId}`, { method: 'DELETE' })
+                .then(response => response.json())
+                .then(data => {
+                    alert(data.mensaje);
+                    if (data.exito) {
+                        loadProducts();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error al eliminar el producto:', error);
+                    alert('Ocurrió un error de comunicación al intentar eliminar el producto.');
+                });
         }
+
+        const modal = document.getElementById('editModal');
+        const modalTitle = document.getElementById('modal-title');
+        const editForm = document.getElementById('edit-form');
+        const idInput = document.getElementById('edit-id');
+
+        function openCreateModal() {
+            modalTitle.textContent = 'Crear Nuevo Producto';
+            editForm.reset();
+            idInput.value = '';
+            modal.style.display = 'flex';
+            setTimeout(() => modal.classList.add('active'), 10);
+        }
+
+        function openModal(product) {
+            modalTitle.textContent = 'Editar Producto';
+            editForm.reset();
+            idInput.value = product.id;
+            document.getElementById('edit-nombre').value = product.nombre;
+            document.getElementById('edit-precio').value = product.precio.toFixed(2);
+            document.getElementById('edit-stock').value = product.stock;
+            document.getElementById('edit-imagen').value = product.imagenUrl || '';
+            modal.style.display = 'flex';
+            setTimeout(() => modal.classList.add('active'), 10);
+        }
+
+        function closeModal() {
+            modal.classList.remove('active');
+            setTimeout(() => modal.style.display = "none", 300);
+        }
+
         window.onclick = function(event) {
             if (event.target == modal) {
                 closeModal();
             }
         }
         
-        // --- LÓGICA PARA ENVIAR EL FORMULARIO DE EDICIÓN ---
         document.getElementById('edit-form').addEventListener('submit', function(event) {
             event.preventDefault();
             const formData = new URLSearchParams(new FormData(this));
 
-            fetch('admin/productos', { // Hacemos POST al mismo servlet
+            fetch('admin/productos', {
                 method: 'POST',
                 body: formData
             })
@@ -138,14 +265,12 @@ function openModal(product) {
                 alert(data.mensaje);
                 if (data.exito) {
                     closeModal();
-                    loadProducts(); // Recargamos la lista de productos
+                    loadProducts();
                 }
             });
         });
 
-        // Cargar los productos cuando la página esté lista
         document.addEventListener('DOMContentLoaded', loadProducts);
     </script>
-
 </body>
 </html>

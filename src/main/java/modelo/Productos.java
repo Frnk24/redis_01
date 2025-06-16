@@ -67,6 +67,11 @@ public class Productos implements Serializable {
         this.precio = precio;
         this.stock = stock;
     }
+    @Column(name = "imagen_url")
+    private String imagenUrl;
+
+    public String getImagenUrl() { return imagenUrl; }
+    public void setImagenUrl(String imagenUrl) { this.imagenUrl = imagenUrl; }
 
     public Integer getId() {
         return id;
