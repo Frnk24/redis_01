@@ -1,111 +1,124 @@
 <!DOCTYPE html>
 <html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de Ventas con Redis (HTML+AJAX)</title>
-    <style>
-        /* Los mismos estilos que teníamos en el JSP */
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; max-width: 700px; margin: 40px auto; padding: 20px; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
-        h1, h2 { color: #333; }
-        .form-container { background-color: #f9f9f9; padding: 20px; border-radius: 5px; }
-        .form-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; }
-        input, select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
-        button { width: 100%; padding: 12px 15px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; }
-        button:hover { background-color: #0056b3; }
-        #message-box { margin-top: 20px; padding: 15px; border-radius: 5px; font-weight: bold; display: none; /* Oculto por defecto */ }
-        .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
-        .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
-        .explanation { background-color: #e2e3e5; padding: 15px; border-radius: 5px; margin-top: 20px; font-size: 14px; line-height: 1.6; }
-    </style>
-</head>
-<body>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Iniciar Sesión - Tienda Redis</title>
+        <!-- Usaremos los mismos estilos que en index.html para mantener la consistencia -->
+        <style>
+            body {
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+                max-width: 400px;
+                margin: 80px auto;
+                padding: 20px;
+                border: 1px solid #ddd;
+                border-radius: 8px;
+                box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            }
+            h1 {
+                color: #333;
+                text-align: center;
+            }
+            .form-group {
+                margin-bottom: 15px;
+            }
+            label {
+                display: block;
+                margin-bottom: 5px;
+                font-weight: bold;
+            }
+            input {
+                width: 100%;
+                padding: 10px;
+                border: 1px solid #ccc;
+                border-radius: 4px;
+                box-sizing: border-box;
+            }
+            button {
+                width: 100%;
+                padding: 12px 15px;
+                background-color: #28a745;
+                color: white;
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+                font-size: 16px;
+            }
+            button:hover {
+                background-color: #218838;
+            }
+            #message-box {
+                margin-top: 20px;
+                padding: 15px;
+                border-radius: 5px;
+                font-weight: bold;
+                display: none;
+                text-align: center;
+            }
+            .error {
+                background-color: #f8d7da;
+                color: #721c24;
+                border: 1px solid #f5c6cb;
+            }
+        </style>
+    </head>
+    <body>
 
-    <h1>Simulador de Venta con Caché Redis</h1>
-    <p>Frontend con HTML y JavaScript (AJAX) para comunicarse con el Servlet.</p>
+        <h1>Iniciar Sesión</h1>
 
-    <div class="form-container">
-        <!-- El 'id' es importante para que JavaScript pueda encontrar el formulario -->
-        <form id="venta-form">
+        <form id="login-form">
             <div class="form-group">
-                <label for="idProducto">Seleccione un Producto:</label>
-                <select name="idProducto" id="idProducto" required>
-                    <option value="1">1 - Laptop Gamer ASUS</option>
-                    <option value="2">2 - Mouse Logitech G203</option>
-                    <option value="3">3 - Teclado Mecánico Redragon</option>
-                </select>
+                <label for="email">Correo Electrónico:</label>
+                <input type="email" id="email" name="email" required>
             </div>
             <div class="form-group">
-                <label for="cantidad">Cantidad a comprar:</label>
-                <input type="number" id="cantidad" name="cantidad" value="1" min="1" required>
+                <label for="password">Contraseña:</label>
+                <input type="password" id="password" name="password" required>
             </div>
-            <button type="submit">Realizar Compra</button>
+            <button type="submit">Ingresar</button>
         </form>
-    </div>
 
-    <!-- Este div mostrará la respuesta del servidor -->
-    <div id="message-box"></div>
+<div style="text-align: center; margin-top: 15px;">
+    <p>¿No tienes una cuenta? <a href="registro.html">Regístrate aquí</a></p>
+</div>
+        <div id="message-box" class="error"></div>
 
-    <div class="explanation">
-        <h2>¿Qué sucede "detrás de cámaras"?</h2>
-        <p><strong>Observe la consola de salida de NetBeans Y la pestaña "Network" de las herramientas de desarrollador de su navegador.</strong></p>
-        <ol>
-            <li><strong>CACHE MISS:</strong> La primera vez que se compra, el sistema busca en MySQL y guarda en Redis.</li>
-            <li><strong>CACHE HIT:</strong> Las siguientes consultas del mismo producto se obtienen de Redis.</li>
-            <li><strong>CACHE INVALIDADA:</strong> Tras una venta, la copia en Redis se borra para mantener la consistencia.</li>
-        </ol>
-    </div>
+        <script>
+            document.getElementById('login-form').addEventListener('submit', function (event) {
+                event.preventDefault();
 
-    <script>
-        // Este código se ejecuta cuando el usuario envía el formulario
-        document.getElementById('venta-form').addEventListener('submit', function(event) {
-            // 1. Prevenimos que el formulario se envíe de la forma tradicional (recargando la página)
-            event.preventDefault();
+                const email = document.getElementById('email').value;
+                const password = document.getElementById('password').value;
 
-            // 2. Obtenemos los datos del formulario
-            const idProducto = document.getElementById('idProducto').value;
-            const cantidad = document.getElementById('cantidad').value;
-            
-            // 3. Preparamos los datos para enviarlos al servlet.
-            // Usamos URLSearchParams que es la forma estándar para 'Content-Type': 'application/x-www-form-urlencoded'
-            const formData = new URLSearchParams();
-            formData.append('idProducto', idProducto);
-            formData.append('cantidad', cantidad);
+                const formData = new URLSearchParams();
+                formData.append('email', email);
+                formData.append('password', password);
 
-            // 4. Usamos la API 'fetch' para hacer una petición POST al servlet (AJAX)
-            fetch('VentaServlet', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-                body: formData
-            })
-            .then(response => response.json()) // 5. Esperamos una respuesta en formato JSON del servlet
-            .then(data => {
-                // 6. Cuando la respuesta llega, la mostramos en la página
-                const messageBox = document.getElementById('message-box');
-                messageBox.textContent = data.mensaje; // 'data.mensaje' viene del JSON que enviará el servlet
-                
-                // Aplicamos el estilo de éxito o error
-                if (data.exito) {
-                    messageBox.className = 'success';
-                } else {
-                    messageBox.className = 'error';
-                }
-                
-                messageBox.style.display = 'block'; // Hacemos visible el cuadro de mensaje
-            })
-            .catch(error => {
-                // 7. Si hay un error de red o algo falla, lo mostramos
-                console.error('Error en la petición AJAX:', error);
-                const messageBox = document.getElementById('message-box');
-                messageBox.textContent = 'Error de comunicación con el servidor.';
-                messageBox.className = 'error';
-                messageBox.style.display = 'block';
+                fetch('LoginServlet', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                    body: formData
+                })
+                        .then(response => response.json())
+                        .then(data => {
+    if (data.exito) {
+        // Leemos la URL de redirección que nos mandó el servlet
+        window.location.href = data.redirectURL; 
+    } else {
+                                // Si falla, mostramos el mensaje de error.
+                                const messageBox = document.getElementById('message-box');
+                                messageBox.textContent = data.mensaje;
+                                messageBox.style.display = 'block';
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error en la petición AJAX:', error);
+                            const messageBox = document.getElementById('message-box');
+                            messageBox.textContent = 'Error de comunicación con el servidor.';
+                            messageBox.style.display = 'block';
+                        });
             });
-        });
-    </script>
+        </script>
 
-</body>
+    </body>
 </html>

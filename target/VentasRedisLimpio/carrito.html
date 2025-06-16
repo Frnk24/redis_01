@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Mi Carrito de Compras</title>
+    <style>
+        body { font-family: sans-serif; max-width: 800px; margin: 40px auto; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        .total { font-weight: bold; font-size: 1.2em; text-align: right; }
+    </style>
+</head>
+<body>
+    <h1>Mi Carrito</h1>
+    <a href="tienda.html">Seguir comprando</a>
+    
+    <div id="carrito-container">
+        <!-- El contenido del carrito se generará aquí con JavaScript -->
+        <p>Cargando carrito...</p>
+    </div>
+    
+    <script>
+    // La función para cargar el carrito ahora también generará los botones de eliminar
+    function loadCarrito() {
+        fetch('CarritoServlet')
+            .then(response => {
+                if (response.status === 401) { window.location.href = 'index.html'; }
+                if (!response.ok) { throw new Error('Error al cargar el carrito.'); }
+                return response.json();
+            })
+            .then(items => {
+                const container = document.getElementById('carrito-container');
+                if (items.length === 0) {
+                    container.innerHTML = '<h2>Tu carrito está vacío.</h2>';
+                    return;
+                }
+                
+                let totalCarrito = 0;
+                let tablaHTML = `
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Producto</th>
+                                <th>Precio Unitario</th>
+                                <th>Cantidad</th>
+                                <th>Subtotal</th>
+                                <th>Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+                
+                items.forEach(item => {
+                    // El campo del item ahora necesita el ID para la función de eliminar
+                    tablaHTML += `
+                        <tr>
+                            <td>${item.nombre}</td>
+                            <td>S/ ${item.precio.toFixed(2)}</td>
+                            <td>${item.cantidad}</td>
+                            <td>S/ ${item.subtotal.toFixed(2)}</td>
+                            <td><button onclick="eliminarItem(${item.id})">Quitar</button></td>
+                        </tr>
+                    `;
+                    totalCarrito += item.subtotal;
+                });
+                
+                tablaHTML += `
+                        </tbody>
+                    </table>
+                    <p class="total">Total: S/ ${totalCarrito.toFixed(2)}</p>
+                    <button onclick="finalizarCompra()">Finalizar Compra</button>
+                    <button onclick="vaciarCarrito()">Vaciar Carrito</button>
+                `;
+                
+                container.innerHTML = tablaHTML;
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                container.innerHTML = '<p>Error al cargar el carrito.</p>';
+            });
+    }
+
+    // --- NUEVAS FUNCIONES ---
+
+    function eliminarItem(idProducto) {
+        if (!confirm('¿Estás seguro de que quieres quitar este producto del carrito?')) return;
+        
+        // Hacemos una petición DELETE al servlet, pasando el ID como parámetro en la URL
+        fetch(`CarritoServlet?idProducto=${idProducto}`, { method: 'DELETE' })
+            .then(response => response.json())
+            .then(data => {
+                if (data.exito) {
+                    loadCarrito(); // Recargamos la vista del carrito
+                } else {
+                    alert('Error al quitar el producto.');
+                }
+            });
+    }
+
+    function vaciarCarrito() {
+        if (!confirm('¿Estás seguro de que quieres vaciar todo el carrito?')) return;
+
+        // Petición DELETE sin parámetros para vaciar todo
+        fetch('CarritoServlet', { method: 'DELETE' })
+            .then(response => response.json())
+            .then(data => {
+                if (data.exito) {
+                    loadCarrito(); // Recargamos la vista del carrito
+                } else {
+                    alert('Error al vaciar el carrito.');
+                }
+            });
+    }
+
+    // --- FUNCIONES EXISTENTES ---
+
+    function finalizarCompra() {
+        const boton = event.target;
+        boton.disabled = true;
+        boton.textContent = 'Procesando...';
+        fetch('FinalizarCompraServlet', { method: 'POST' })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.mensaje);
+                if (data.exito) {
+                    loadCarrito();
+                } else {
+                    boton.disabled = false;
+                    boton.textContent = 'Finalizar Compra';
+                }
+            });
+    }
+
+    // Cargar el carrito cuando la página esté lista
+    window.addEventListener('DOMContentLoaded', loadCarrito);
+</script>
+</body>
+</html>

@@ -21,7 +21,19 @@
             <version>7.0</version>
             <scope>provided</scope>
         </dependency>
-
+<!-- Librería para hashear contraseñas de forma segura -->
+<dependency>
+    <groupId>org.mindrot</groupId>
+    <artifactId>jbcrypt</artifactId>
+    <version>0.4</version>
+</dependency>
+<!-- En la sección <dependencies> de tu pom.xml -->
+<dependency>
+    <groupId>javax.websocket</groupId>
+    <artifactId>javax.websocket-api</artifactId>
+    <version>1.1</version>
+    <scope>provided</scope> <!-- 'provided' porque Tomcat ya lo tiene -->
+</dependency>
         <!-- Implementación de JPA (EclipseLink) -->
         <dependency>
             <groupId>org.eclipse.persistence</groupId>

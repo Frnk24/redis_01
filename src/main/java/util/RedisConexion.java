@@ -35,7 +35,7 @@ public class RedisConexion {
      //para que pueda volver a la piscina. La mejor forma de asegurar esto
      // es usando un bloque try-with-resources.
      // 
-     // Ejemplo de uso correcto:
+     //Ejemplo de uso correcto:
      // try (Jedis jedis = RedisConexion.getJedis()) {
     //     jedis.set("mi_llave", "mi_valor");
     // }

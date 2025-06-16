@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Panel de Administración</title>
+    <style>
+        body { font-family: sans-serif; max-width: 900px; margin: 40px auto; padding: 20px; }
+        h1 { color: #d9534f; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        .btn-edit { background-color: #5bc0de; color: white; padding: 5px 10px; border: none; cursor: pointer; border-radius: 3px; }
+        .logout-btn { display: inline-block; margin-top: 20px; padding: 10px 15px; background-color: #f0ad4e; color: white; text-decoration: none; border-radius: 4px; }
+        
+        /* Estilos para el modal de edición */
+        .modal { display: none; position: fixed; z-index: 1; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.4); }
+        .modal-content { background-color: #fefefe; margin: 15% auto; padding: 20px; border: 1px solid #888; width: 80%; max-width: 500px; border-radius: 5px; }
+        .close { color: #aaa; float: right; font-size: 28px; font-weight: bold; }
+        .close:hover, .close:focus { color: black; text-decoration: none; cursor: pointer; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; }
+        input { width: 100%; padding: 8px; box-sizing: border-box; }
+    </style>
+</head>
+<body>
+    <h1>Panel de Administración - Gestión de Productos</h1>
+<button onclick="openCreateModal()">Crear Nuevo Producto</button>
+    <a href="LogoutServlet" class="logout-btn">Cerrar Sesión</a>
+
+    <div id="product-list">
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nombre</th>
+                    <th>Precio</th>
+                    <th>Stock</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="product-table-body">
+                <!-- Los productos se cargarán aquí con JavaScript -->
+            </tbody>
+        </table>
+    </div>
+
+    <!-- El Modal para Editar -->
+    <div id="editModal" class="modal">
+      <div class="modal-content">
+        <span class="close" onclick="closeModal()">×</span>
+        <h2>Editar Producto</h2>
+        <form id="edit-form">
+            <input type="hidden" id="edit-id" name="id">
+            <div class="form-group">
+                <label for="edit-nombre">Nombre:</label>
+                <input type="text" id="edit-nombre" name="nombre" required>
+            </div>
+            <div class="form-group">
+                <label for="edit-precio">Precio:</label>
+                <input type="number" step="0.01" id="edit-precio" name="precio" required>
+            </div>
+            <div class="form-group">
+                <label for="edit-stock">Stock:</label>
+                <input type="number" id="edit-stock" name="stock" required>
+            </div>
+            <button type="submit">Guardar Cambios</button>
+        </form>
+      </div>
+    </div>
+
+    <script>
+        // --- LÓGICA PARA CARGAR Y MOSTRAR LOS PRODUCTOS ---
+        function loadProducts() {
+            fetch('admin/productos') // Hacemos GET a nuestro nuevo servlet
+                .then(response => response.json())
+                .then(products => {
+                    const tableBody = document.getElementById('product-table-body');
+                    tableBody.innerHTML = ''; // Limpiamos la tabla
+                    products.forEach(product => {
+                        const row = `
+                            <tr>
+                                <td>${product.id}</td>
+                                <td>${product.nombre}</td>
+                                <td>S/ ${product.precio.toFixed(2)}</td>
+                                <td>${product.stock}</td>
+                                <td><button class="btn-edit" onclick='openModal(${JSON.stringify(product)})'>Editar</button></td>
+                            </tr>
+                        `;
+                        tableBody.innerHTML += row;
+                    });
+                });
+        }
+        
+       // --- LÓGICA DEL MODAL (AHORA PUEDE CREAR O EDITAR) ---
+const modal = document.getElementById('editModal');
+const modalTitle = document.querySelector('#editModal h2');
+const editForm = document.getElementById('edit-form');
+const idInput = document.getElementById('edit-id');
+
+// NUEVA función para abrir el modal en modo CREACIÓN
+function openCreateModal() {
+    modalTitle.textContent = 'Crear Nuevo Producto';
+    editForm.reset(); // Limpia el formulario
+    idInput.value = ''; // Aseguramos que el ID esté vacío
+    modal.style.display = 'block';
+}
+
+// MODIFICAMOS la función para abrir el modal en modo EDICIÓN
+function openModal(product) {
+    modalTitle.textContent = 'Editar Producto';
+    editForm.reset();
+    idInput.value = product.id;
+    document.getElementById('edit-nombre').value = product.nombre;
+    document.getElementById('edit-precio').value = product.precio.toFixed(2);
+    document.getElementById('edit-stock').value = product.stock;
+    modal.style.display = 'block';
+}
+        function closeModal() {
+            modal.style.display = "none";
+        }
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                closeModal();
+            }
+        }
+        
+        // --- LÓGICA PARA ENVIAR EL FORMULARIO DE EDICIÓN ---
+        document.getElementById('edit-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const formData = new URLSearchParams(new FormData(this));
+
+            fetch('admin/productos', { // Hacemos POST al mismo servlet
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert(data.mensaje);
+                if (data.exito) {
+                    closeModal();
+                    loadProducts(); // Recargamos la lista de productos
+                }
+            });
+        });
+
+        // Cargar los productos cuando la página esté lista
+        document.addEventListener('DOMContentLoaded', loadProducts);
+    </script>
+
+</body>
+</html>

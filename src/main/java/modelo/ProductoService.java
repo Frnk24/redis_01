@@ -3,6 +3,8 @@ package modelo;
 import com.google.gson.Gson;
 import com.mycompany.ventasredislimpio.ProductosJpaController;
 import com.mycompany.ventasredislimpio.exceptions.NonexistentEntityException;
+import java.util.Map;
+import java.util.HashMap;
 import modelo.Productos;
 import util.RedisConexion; 
 import java.util.logging.Level;
@@ -27,36 +29,60 @@ public class ProductoService {
      * @param id El ID del producto a buscar.
      * @return El objeto Producto, o null si no se encuentra.
      */
-    public Productos obtenerProductoPorId(int id) {
-        String redisKey = "producto:" + id; // Clave única para este producto en Redis
+    // Reemplaza el método obtenerProductoPorId en ProductoService.java
 
-        try (Jedis jedis = RedisConexion.getJedis()) {
-            // 1. INTENTAR OBTENER DE REDIS (CACHÉ)
-            String productoJson = jedis.get(redisKey);
+public Productos obtenerProductoPorId(int id) {
+    String redisKey = "producto:" + id;
 
-            if (productoJson != null) {
-                // ¡CACHE HIT! Lo encontramos en Redis, es la vía rápida.
-                System.out.println("CACHE HIT: Producto " + id + " encontrado en Redis.");
-                return gson.fromJson(productoJson, Productos.class);
-            } else {
-                // ¡CACHE MISS! No está en Redis, vamos a la base de datos (la vía lenta).
-                System.out.println("CACHE MISS: Producto " + id + " no encontrado en Redis. Buscando en MySQL con JPA...");
+    try (Jedis jedis = RedisConexion.getJedis()) {
+        // 1. AHORA, EN LUGAR DE 'GET', VERIFICAMOS SI EL HASH EXISTE.
+        // hgetAll devuelve todos los campos y valores de un hash.
+        // Si la clave no existe, devuelve un mapa vacío.
+        Map<String, String> productoMap = jedis.hgetAll(redisKey);
+
+        if (!productoMap.isEmpty()) {
+            // ¡CACHE HIT! Lo encontramos en Redis como un Hash.
+            System.out.println("CACHE HIT (Hash): Producto " + id + " encontrado en Redis.");
+            
+            // 2. CONSTRUIMOS EL OBJETO 'Productos' A PARTIR DEL MAPA.
+            // Necesitamos convertir los strings del mapa a los tipos correctos (Integer, BigDecimal, etc.).
+            Productos producto = new Productos();
+            producto.setId(Integer.parseInt(productoMap.get("id")));
+            producto.setNombre(productoMap.get("nombre"));
+            // OJO: Tu DTO usa BigDecimal, así que creamos un BigDecimal desde el String.
+            producto.setPrecio(new java.math.BigDecimal(productoMap.get("precio"))); 
+            producto.setStock(Integer.parseInt(productoMap.get("stock")));
+            
+            return producto;
+
+        } else {
+            // ¡CACHE MISS! No está en Redis, vamos a la base de datos.
+            System.out.println("CACHE MISS (Hash): Producto " + id + " no encontrado. Buscando en MySQL...");
+            
+            Productos productoDeDB = jpaController.findProductos(id);
+            
+            if (productoDeDB != null) {
+                // 3. GUARDAMOS EN REDIS COMO UN HASH, CAMPO POR CAMPO.
+                // Creamos un mapa de String a String para guardar en el Hash.
+                Map<String, String> nuevoProductoMap = new HashMap<>();
+                nuevoProductoMap.put("id", String.valueOf(productoDeDB.getId()));
+                nuevoProductoMap.put("nombre", productoDeDB.getNombre());
+                nuevoProductoMap.put("precio", productoDeDB.getPrecio().toPlainString()); // Convertimos BigDecimal a String
+                nuevoProductoMap.put("stock", String.valueOf(productoDeDB.getStock()));
                 
-                Productos productoDeDB = jpaController.findProductos(id);
+                // El comando 'hset' guarda el mapa completo en la clave del Hash.
+                jedis.hset(redisKey, nuevoProductoMap);
                 
-                if (productoDeDB != null) {
-                    // 2. GUARDAR EN REDIS PARA LA PRÓXIMA VEZ
-                    // Lo guardamos en formato JSON. setex lo guarda con un tiempo de expiración (ej. 1 hora)
-                    jedis.setex(redisKey, 3600, gson.toJson(productoDeDB)); 
-                    System.out.println("Producto " + id + " guardado en caché de Redis.");
-                }
-                
-                return productoDeDB;
+                // Es buena práctica ponerle una expiración a la caché.
+                jedis.expire(redisKey, 3600); // Expira en 1 hora
+
+                System.out.println("Producto " + id + " guardado en caché de Redis como Hash.");
             }
-        
+            
+            return productoDeDB;
+        }
     }
-        
-    }
+}
     /**
      * Procesa la venta de un producto, actualizando el stock en la base de datos
      * y invalidando la caché en Redis para mantener la consistencia.
@@ -65,42 +91,47 @@ public class ProductoService {
      * @param cantidadComprada La cantidad de unidades a vender.
      * @return true si la venta fue exitosa, false en caso contrario.
      */
-    public boolean realizarVenta(int id, int cantidadComprada) {
-        // Obtenemos el producto (usará la caché si está disponible para una verificación rápida)
-        Productos producto = this.obtenerProductoPorId(id);
+    // Reemplaza el método realizarVenta en ProductoService.java
 
-        if (producto == null || producto.getStock() < cantidadComprada) {
-            System.out.println("VENTA FALLIDA: Producto no existe o no hay stock suficiente.");
-            return false; // No se puede vender si no existe o no hay stock.
-        }
+public boolean realizarVenta(int id, int cantidadComprada) {
+    // La primera parte para obtener el producto no cambia.
+    // Usará el nuevo método obtenerProductoPorId que ya lee de Hashes.
+    Productos producto = this.obtenerProductoPorId(id);
 
-        // Si hay stock, procedemos a actualizar la "fuente de la verdad" (la base de datos)
-        producto.setStock(producto.getStock() - cantidadComprada);
-        
-        try {
-            // 1. ACTUALIZAR LA FUENTE DE VERDAD (MySQL) usando JPA.
-            // Este es el paso más crítico.
-            jpaController.edit(producto);
-            System.out.println("BD ACTUALIZADA: Nuevo stock para producto " + id + " es " + producto.getStock());
-            
-            // 2. SI LA ACTUALIZACIÓN EN BD FUE EXITOSA, INVALIDAR LA CACHÉ EN REDIS.
-            // Esto es vital para la CONSISTENCIA. Forzamos a que la próxima lectura
-            // del producto vaya a la BD a buscar el nuevo stock y lo vuelva a cachear.
-            
-            String redisKey = "producto:" + id;
-            try (Jedis jedis = RedisConexion.getJedis()) {
-                jedis.del(redisKey); // El comando 'del' elimina la clave.
-                System.out.println("CACHÉ INVALIDADA: La clave " + redisKey + " fue eliminada de Redis.");
-            }
-            return true;
-
-        } catch (NonexistentEntityException ex) {
-            Logger.getLogger(ProductoService.class.getName()).log(Level.SEVERE, "Error de consistencia: El producto existía pero desapareció durante la transacción.", ex);
-        } catch (Exception ex) {
-            Logger.getLogger(ProductoService.class.getName()).log(Level.SEVERE, "Error al editar el producto con JPA.", ex);
-        }
-        
-        // Si llegamos aquí, algo falló en la actualización de la BD.
+    if (producto == null || producto.getStock() < cantidadComprada) {
+        System.out.println("VENTA FALLIDA (Hash): Producto no existe o no hay stock suficiente.");
         return false;
     }
+
+    try {
+        // 1. ACTUALIZAMOS LA BASE DE DATOS PRIMERO (LA FUENTE DE LA VERDAD).
+        // Esta parte es igual, porque JPA no sabe nada de Redis.
+        producto.setStock(producto.getStock() - cantidadComprada);
+        jpaController.edit(producto);
+        System.out.println("BD ACTUALIZADA (Hash): Nuevo stock para producto " + id + " es " + producto.getStock());
+        
+        // 2. ACTUALIZAMOS LA CACHÉ, PERO AHORA DE FORMA MÁS INTELIGENTE.
+        String redisKey = "producto:" + id;
+        try (Jedis jedis = RedisConexion.getJedis()) {
+            // Verificamos si la caché existe antes de intentar actualizarla.
+            if (jedis.exists(redisKey)) {
+                // HINCRBY es atómico. Decrementa el valor del campo 'stock' por 'cantidadComprada'.
+                // Pasamos un valor negativo para restar.
+                jedis.hincrBy(redisKey, "stock", -cantidadComprada);
+                System.out.println("CACHÉ ACTUALIZADA (Hash): Stock del producto " + id + " decrementado en Redis.");
+            }
+            // NOTA: Con este enfoque, ya no necesitamos invalidar (borrar) la clave.
+            // ¡Simplemente actualizamos el campo que cambió! Es más eficiente.
+        }
+        return true;
+
+    } catch (Exception ex) {
+        // Si la actualización de la BD falla, revertimos el cambio en el objeto en memoria
+        // para que la información que se muestre sea consistente.
+        producto.setStock(producto.getStock() + cantidadComprada);
+        Logger.getLogger(ProductoService.class.getName()).log(Level.SEVERE, "Error al editar el producto con JPA.", ex);
+    }
+    
+    return false;
+}
 }

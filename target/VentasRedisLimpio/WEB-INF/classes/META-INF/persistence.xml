@@ -3,6 +3,7 @@
   <persistence-unit name="com.mycompany_Prueba_war_1.0-SNAPSHOTPU" transaction-type="RESOURCE_LOCAL">
     <provider>org.eclipse.persistence.jpa.PersistenceProvider</provider>
     <class>modelo.Productos</class>
+    <class>modelo.Usuarios</class>
     <exclude-unlisted-classes>false</exclude-unlisted-classes>
     <properties>
       <property name="javax.persistence.jdbc.url" value="jdbc:mysql://localhost:3306/ventas_redis?zeroDateTimeBehavior=CONVERT_TO_NULL"/>
