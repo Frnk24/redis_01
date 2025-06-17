@@ -220,26 +220,25 @@
         const modalTitle = document.getElementById('modal-title');
         const editForm = document.getElementById('edit-form');
         const idInput = document.getElementById('edit-id');
+function openCreateModal() {
+    modalTitle.textContent = 'Crear Nuevo Producto';
+    editForm.reset();
+    idInput.value = '';
+    modal.style.display = 'flex'; // Primero lo hacemos visible
+    setTimeout(() => modal.classList.add('active'), 10); // Luego activamos la animación
+}
 
-        function openCreateModal() {
-            modalTitle.textContent = 'Crear Nuevo Producto';
-            editForm.reset();
-            idInput.value = '';
-            modal.style.display = 'flex';
-            setTimeout(() => modal.classList.add('active'), 10);
-        }
-
-        function openModal(product) {
-            modalTitle.textContent = 'Editar Producto';
-            editForm.reset();
-            idInput.value = product.id;
-            document.getElementById('edit-nombre').value = product.nombre;
-            document.getElementById('edit-precio').value = product.precio.toFixed(2);
-            document.getElementById('edit-stock').value = product.stock;
-            document.getElementById('edit-imagen').value = product.imagenUrl || '';
-            modal.style.display = 'flex';
-            setTimeout(() => modal.classList.add('active'), 10);
-        }
+function openModal(product) {
+    modalTitle.textContent = 'Editar Producto';
+    editForm.reset();
+    idInput.value = product.id;
+    document.getElementById('edit-nombre').value = product.nombre;
+    document.getElementById('edit-precio').value = product.precio.toFixed(2);
+    document.getElementById('edit-stock').value = product.stock;
+    document.getElementById('edit-imagen').value = product.imagenUrl || '';
+    modal.style.display = 'flex'; // Primero lo hacemos visible
+    setTimeout(() => modal.classList.add('active'), 10); // Luego activamos la animación
+}
 
         function closeModal() {
             modal.classList.remove('active');
@@ -269,8 +268,35 @@
                 }
             });
         });
+function connectAdminWebSocket() {
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const host = window.location.host;
+    const path = window.location.pathname.substring(0, window.location.pathname.lastIndexOf('/'));
+    const wsUrl = `${protocol}//${host}${path}/productos-updates`;
+    
+    const socket = new WebSocket(wsUrl);
 
-        document.addEventListener('DOMContentLoaded', loadProducts);
+    socket.onopen = () => console.log("Admin WebSocket: Conexión establecida.");
+    
+    socket.onmessage = (event) => {
+        if (event.data === "update") {
+            console.log("Admin WebSocket: Actualización recibida. Recargando lista de productos...");
+            // Usamos la función que ya existe para cargar la tabla de productos
+            loadProducts(); 
+        }
+    };
+
+    socket.onclose = () => {
+        console.log("Admin WebSocket: Conexión cerrada. Reconectando...");
+        setTimeout(connectAdminWebSocket, 5000);
+    };
+
+    socket.onerror = (error) => console.error("Admin WebSocket: Error:", error);
+}
+    document.addEventListener('DOMContentLoaded', () => {
+    loadProducts();
+    connectAdminWebSocket();
+});
     </script>
 </body>
 </html>
