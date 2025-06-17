@@ -32,10 +32,9 @@ public class LoginServlet extends HttpServlet {
         String redirectURL = "";
         
         try {
-            // Usamos el método específico que creamos en el JpaController
+            
             Usuarios usuario = usuarioController.findUsuarioByEmail(email);
 
-            // Comparamos el usuario y la contraseña (en texto plano, como acordamos)
             if (usuario != null && usuario.getPassword().equals(password)) {
                 // Login Exitoso
                 exito = true;
@@ -44,16 +43,14 @@ public class LoginServlet extends HttpServlet {
                 // Creamos la sesión
                 HttpSession session = request.getSession(true);
                 session.setAttribute("usuario", usuario);
-                session.setMaxInactiveInterval(1800); // 30 minutos
+                session.setMaxInactiveInterval(1800); 
                 
-                // Determinamos a dónde redirigir
                 if ("admin".equals(usuario.getRol())) {
                     redirectURL = "admin.html";
                 } else {
                     redirectURL = "tienda.html";
                 }
             } else {
-                // Login Fallido
                 exito = false;
                 mensaje = "Correo electrónico o contraseña incorrectos.";
             }
@@ -63,7 +60,6 @@ public class LoginServlet extends HttpServlet {
             e.printStackTrace();
         }
 
-        // Construimos y enviamos la respuesta JSON
         String jsonResponse = String.format(
             "{\"exito\": %b, \"mensaje\": \"%s\", \"redirectURL\": \"%s\"}", 
             exito, mensaje, redirectURL

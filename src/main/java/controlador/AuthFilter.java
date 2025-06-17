@@ -57,39 +57,35 @@ public void doFilter(ServletRequest request, ServletResponse response, FilterCha
         return;
     }
     
-    // Si llegamos aquí, el usuario SÍ ha iniciado sesión.
-    // Ahora verificamos su ROL.
+    
     modelo.Usuarios usuario = 
             (modelo.Usuarios) session.getAttribute("usuario");
-    String userRole = usuario.getRol(); // Obtenemos el rol: "admin" o "cliente"
+    String userRole = usuario.getRol(); 
     
-    // --- LÓGICA DE AUTORIZACIÓN BASADA EN ROLES ---
     
-// Regla 1: Proteger la PÁGINA de administración
 if (path.equals("/admin.html")) {
     if ("admin".equals(userRole)) {
-        // El usuario es admin y quiere acceder a la página de admin. ¡Permitido!
+        
         chain.doFilter(request, response);
     } else {
-        // El usuario es un cliente intentando acceder. ¡Prohibido!
+        
         System.out.println("FILTRO: Acceso DENEGADO para el rol '" + userRole + "' a la página " + path);
         httpResponse.sendError(HttpServletResponse.SC_FORBIDDEN, "No tienes permiso para acceder a esta página.");
     }
 } 
-// Regla 2: Proteger el SERVLET que modifica productos (el POST)
+
 else if (path.equals("/admin/productos") && httpRequest.getMethod().equalsIgnoreCase("POST")) {
      if ("admin".equals(userRole)) {
-        // El usuario es admin y quiere modificar un producto. ¡Permitido!
+       
         chain.doFilter(request, response);
     } else {
-        // El usuario es un cliente intentando modificar un producto. ¡Prohibido!
+        
         System.out.println("FILTRO: Acceso DENEGADO para el rol '" + userRole + "' para modificar productos.");
         httpResponse.sendError(HttpServletResponse.SC_FORBIDDEN, "No tienes permiso para realizar esta acción.");
     }
 }
 else {
-    // Para cualquier otra página protegida (tienda.html, carrito.html, o GET a /admin/productos),
-    // si el usuario ya ha iniciado sesión, tiene acceso.
+    
     chain.doFilter(request, response);
 }
 }

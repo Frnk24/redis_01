@@ -1,7 +1,5 @@
 package controlador;
 
-// Imports para la lógica del Servlet y la aplicación
-// Nota: He limpiado los imports que ya no se usan en este servlet
 import modelo.Productos;
 import modelo.ProductoService;
 import java.io.IOException;
@@ -15,14 +13,11 @@ import javax.servlet.http.HttpServletResponse;
 @WebServlet(name = "VentaServlet", urlPatterns = {"/VentaServlet"})
 public class VentaServlet extends HttpServlet {
 
-    // NO hay variable de instancia
-    // NO hay método init()
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-        // Obtenemos la instancia compartida del servicio desde el contexto
         ProductoService productoService = (ProductoService) getServletContext().getAttribute("productoService");
 
         response.setContentType("application/json");
@@ -62,7 +57,6 @@ public class VentaServlet extends HttpServlet {
         }
     }
 
-    // La clase interna se mantiene igual
     private static class RespuestaJson {
         boolean exito;
         String mensaje;

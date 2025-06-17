@@ -27,7 +27,6 @@ public class RankingServlet extends HttpServlet {
     private final Gson gson = new Gson();
 
     
-    /// En RankingServlet.java
 @Override
 protected void doGet(HttpServletRequest request, HttpServletResponse response)
         throws ServletException, IOException {
@@ -52,7 +51,6 @@ protected void doGet(HttpServletRequest request, HttpServletResponse response)
                 
                 Productos producto = productoService.obtenerProductoPorId(productoId);
                 
-                // Doble validación: nos aseguramos de que el producto y su nombre no son nulos
                 if (producto != null && producto.getNombre() != null) {
                     rankingConDetalles.add(new RankingItem(producto.getNombre(), ventas));
                 } else {
@@ -76,8 +74,7 @@ protected void doGet(HttpServletRequest request, HttpServletResponse response)
     }
 }
 
-// Clase auxiliar FUERA de doGet, para una estructura JSON limpia y tipada.
-// Esto es mejor que un objeto anónimo.
+
 private static class RankingItem {
     String nombre;
     long totalVentas;

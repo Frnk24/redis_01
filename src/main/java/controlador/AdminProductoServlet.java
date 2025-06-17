@@ -24,7 +24,7 @@ public class AdminProductoServlet extends HttpServlet {
 
     private final Gson gson = new Gson();
 
-    // GET se usará para obtener la lista de todos los productos
+    
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -39,7 +39,7 @@ public class AdminProductoServlet extends HttpServlet {
         }
     }
 
-    // POST se usará para crear o actualizar un producto existente
+    
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
         throws ServletException, IOException {
@@ -55,7 +55,7 @@ public class AdminProductoServlet extends HttpServlet {
             String imagenUrl = request.getParameter("imagenUrl");
 
             if (idParam != null && !idParam.isEmpty() && !idParam.equals("0")) {
-                // --- LÓGICA DE ACTUALIZACIÓN ---
+                
                 int id = Integer.parseInt(idParam);
                 Productos productoAActualizar = productoController.findProductos(id);
                 if (productoAActualizar != null) {
@@ -79,7 +79,7 @@ public class AdminProductoServlet extends HttpServlet {
                     mensaje = "El producto no fue encontrado para actualizar.";
                 }
             } else {
-                // --- LÓGICA DE CREACIÓN ---
+               
                 Productos nuevoProducto = new Productos();
                 nuevoProducto.setNombre(nombre);
                 nuevoProducto.setPrecio(precio);
@@ -106,9 +106,6 @@ public class AdminProductoServlet extends HttpServlet {
         response.getWriter().write(String.format("{\"exito\": %b, \"mensaje\": \"%s\"}", exito, mensaje));
     }
 
-    // =======================================================================
-    // ===               NUEVO MÉTODO PARA GESTIONAR DELETE                ===
-    // =======================================================================
     @Override
     protected void doDelete(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -122,16 +119,14 @@ public class AdminProductoServlet extends HttpServlet {
             if (idParam != null && !idParam.isEmpty()) {
                 int id = Integer.parseInt(idParam);
 
-                // 1. Eliminar de la base de datos
                 productoController.destroy(id);
 
-                // 2. Invalidar la caché de este producto en Redis
                 try (Jedis jedis = RedisConexion.getJedis()) {
                     String redisKey = "producto:" + id;
                     jedis.del(redisKey);
                 }
 
-                // 3. Notificar a los clientes a través del WebSocket
+
                 ProductoWebSocketServer.notificarActualizacion();
 
                 exito = true;
@@ -142,17 +137,16 @@ public class AdminProductoServlet extends HttpServlet {
             }
 
         } catch (NonexistentEntityException e) {
-            // Este error ocurre si el producto ya no existe en la BD
             mensaje = "El producto no fue encontrado. Es posible que ya haya sido eliminado.";
             exito = false;
         } catch (NumberFormatException e) {
             mensaje = "El formato del ID del producto es inválido.";
         } catch (Exception e) {
             mensaje = "Ocurrió un error en el servidor al intentar eliminar el producto.";
-            e.printStackTrace(); // Importante para depurar en la consola del servidor
+            e.printStackTrace(); 
         }
         
-        // Enviamos la respuesta JSON al frontend
+        
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
         response.getWriter().write(String.format("{\"exito\": %b, \"mensaje\": \"%s\"}", exito, mensaje));

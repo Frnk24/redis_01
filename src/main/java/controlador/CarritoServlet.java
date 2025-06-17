@@ -28,7 +28,6 @@ public class CarritoServlet extends HttpServlet {
 
     
     
-    // El método GET se usará para OBTENER el contenido del carrito.
     @Override
 protected void doGet(HttpServletRequest request, HttpServletResponse response)
         throws ServletException, IOException {
@@ -43,7 +42,6 @@ protected void doGet(HttpServletRequest request, HttpServletResponse response)
     Usuarios usuario = (Usuarios) session.getAttribute("usuario");
     String carritoKey = "carrito:" + usuario.getId();
     
-    // Usaremos esta clase interna para una respuesta más limpia
     List<ItemCarrito> carritoConDetalles = new ArrayList<>();
 
     try (Jedis jedis = RedisConexion.getJedis()) {
@@ -55,9 +53,7 @@ protected void doGet(HttpServletRequest request, HttpServletResponse response)
 
                 Productos producto = productoService.obtenerProductoPorId(productoId);
                 
-                // ¡AQUÍ ESTÁ LA VALIDACIÓN!
-                // Si el producto no es nulo (es decir, existe en la BD), lo procesamos.
-                // Si es nulo (quizás fue eliminado de la tienda), simplemente lo ignoramos.
+                
                 if (producto != null) {
                     carritoConDetalles.add(new ItemCarrito(producto, cantidad));
                 } else {
@@ -65,7 +61,7 @@ protected void doGet(HttpServletRequest request, HttpServletResponse response)
                                        " está en el carrito pero no se encontró en la base de datos. Omitiendo.");
                 }
             } catch (Exception e) {
-                // Capturamos cualquier error al procesar un solo item para no romper todo el bucle
+               
                 System.err.println("Error procesando un item del carrito: " + e.getMessage());
             }
         }
@@ -80,13 +76,12 @@ protected void doGet(HttpServletRequest request, HttpServletResponse response)
 }
 
 
-    // El método POST se usará para AÑADIR un producto al carrito.
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         
         HttpSession session = request.getSession(false);
-        // Verificamos que el usuario haya iniciado sesión
+
         if (session == null || session.getAttribute("usuario") == null) {
             response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Debe iniciar sesión para comprar.");
             return;
@@ -97,12 +92,11 @@ protected void doGet(HttpServletRequest request, HttpServletResponse response)
             int cantidad = Integer.parseInt(request.getParameter("cantidad"));
             
             Usuarios usuario = (Usuarios) session.getAttribute("usuario");
-            String carritoKey = "carrito:" + usuario.getId(); // Clave única por usuario
-            String productoField = "producto:" + idProducto; // Campo dentro del Hash
+            String carritoKey = "carrito:" + usuario.getId(); 
+            String productoField = "producto:" + idProducto;
             
             try (Jedis jedis = RedisConexion.getJedis()) {
-                // HINCRBY es perfecto: si el producto ya está en el carrito, suma la cantidad.
-                // Si no está, lo crea con la cantidad especificada.
+                // HINCRBY suma la cantidad.
                 jedis.hincrBy(carritoKey, productoField, cantidad);
             }
             
@@ -114,8 +108,7 @@ protected void doGet(HttpServletRequest request, HttpServletResponse response)
             response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Datos de producto o cantidad inválidos.");
         }
     }
-    // Añade este método a CarritoServlet.java
-
+    
 @Override
 protected void doDelete(HttpServletRequest request, HttpServletResponse response)
         throws ServletException, IOException {
@@ -132,12 +125,11 @@ protected void doDelete(HttpServletRequest request, HttpServletResponse response
     
     try (Jedis jedis = RedisConexion.getJedis()) {
         if (productoIdParam != null && !productoIdParam.isEmpty()) {
-            // Caso 1: Eliminar UN SOLO producto del carrito
             String productoField = "producto:" + productoIdParam;
-            jedis.hdel(carritoKey, productoField); // hdel elimina un campo específico de un hash
+            jedis.hdel(carritoKey, productoField); 
         } else {
-            // Caso 2: No se especifica un ID, se asume que se quiere vaciar TODO el carrito
-            jedis.del(carritoKey); // del elimina la clave completa
+            
+            jedis.del(carritoKey); 
         }
     }
     

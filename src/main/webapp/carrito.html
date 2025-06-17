@@ -4,18 +4,18 @@
     <meta charset="UTF-8">
     <title>Mi Carrito de Compras</title>
     
-    <!-- === INICIO DE LOS ESTILOS CSS (MODO OSCURO MINIMALISTA) === -->
+    
     <style>
-        /* --- ESTILOS GLOBALES Y FONDO --- */
+       
         body {
             font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
             margin: 0;
             padding: 40px 20px;
-            background-color: #121212; /* Fondo principal oscuro */
-            color: #e0e0e0;           /* Color de texto principal claro */
+            background-color: #121212; 
+            color: #e0e0e0;         
         }
 
-        /* --- CONTENEDOR PRINCIPAL --- */
+        
         .main-container {
             max-width: 900px;
             margin: 0 auto;
@@ -27,21 +27,21 @@
             border-bottom: 1px solid #333;
             padding-bottom: 15px;
             margin-top: 0;
-            margin-bottom: 25px; /* Añadido un poco más de espacio debajo del título */
+            margin-bottom: 25px; 
         }
         
         #carrito-container {
             margin-top: 30px;
         }
 
-        /* --- ESTILOS DE LA TABLA DEL CARRITO --- */
+       
         table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 20px;
             background-color: #1e1e1e;
             border-radius: 8px;
-            overflow: hidden; /* Para que el radius afecte a las celdas */
+            overflow: hidden;
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
         }
 
@@ -67,16 +67,16 @@
             border-bottom: none;
         }
 
-        /* --- RESUMEN DEL CARRITO (TOTAL Y BOTONES) --- */
+       
         .cart-summary {
             margin-top: 30px;
             padding: 20px;
             background-color: #1e1e1e;
             border-radius: 8px;
             display: flex;
-            justify-content: flex-end; /* Alinea todo a la derecha */
+            justify-content: flex-end; 
             align-items: center;
-            flex-wrap: wrap; /* Para que se ajuste en pantallas pequeñas */
+            flex-wrap: wrap; 
         }
 
         .total {
@@ -87,8 +87,8 @@
             margin-right: 20px;
         }
 
-        /* --- ESTILOS GENERALES DE BOTONES Y ENLACES --- */
-        .btn, a.btn { /* Aplicamos estilos base a botones y enlaces con clase .btn */
+        
+        .btn, a.btn { 
             padding: 10px 20px;
             border: none;
             border-radius: 6px;
@@ -97,8 +97,8 @@
             font-weight: bold;
             transition: all 0.3s ease;
             margin-left: 10px;
-            text-decoration: none; /* Aseguramos que no haya subrayado */
-            display: inline-block; /* Para que el padding funcione correctamente en el enlace */
+            text-decoration: none; 
+            display: inline-block; 
         }
 
         .btn:hover, a.btn:hover {
@@ -106,7 +106,7 @@
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
         }
         
-        /* Botón primario (Finalizar Compra) */
+       
         .btn-primary {
             background-color: #3498db;
             color: #ffffff;
@@ -115,7 +115,7 @@
             background-color: #2980b9;
         }
         
-        /* Botón de peligro (Quitar, Vaciar) */
+        
         .btn-danger {
             background-color: #e74c3c;
             color: white;
@@ -124,7 +124,7 @@
             background-color: #c0392b;
         }
         
-        /* Botón secundario (Vaciar Carrito, para que sea menos prominente) */
+        
         .btn-secondary {
             background-color: #444;
             color: #e0e0e0;
@@ -147,7 +147,6 @@
         }
 
     </style>
-    <!-- === FIN DE LOS ESTILOS CSS === -->
 </head>
 <body>
 

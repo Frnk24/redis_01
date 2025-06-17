@@ -19,7 +19,7 @@ import redis.clients.jedis.Jedis;
 @WebServlet(name = "FinalizarCompraServlet", urlPatterns = {"/FinalizarCompraServlet"})
 public class FinalizarCompraServlet extends HttpServlet {
 
-    // Usaremos POST para esta acción, ya que modifica el estado del servidor.
+    
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -38,18 +38,15 @@ public class FinalizarCompraServlet extends HttpServlet {
         boolean exito = false;
 
         try (Jedis jedis = RedisConexion.getJedis()) {
-            // 1. Obtenemos el carrito del usuario desde Redis
+           
             Map<String, String> itemsEnCarrito = jedis.hgetAll(carritoKey);
 
             if (itemsEnCarrito.isEmpty()) {
                 mensaje = "Tu carrito está vacío.";
                 exito = false;
             } else {
-                // --- INICIO DE LA TRANSACCIÓN SIMULADA ---
-                // En un sistema real, usaríamos una transacción de base de datos (em.getTransaction().begin()).
-                // Por simplicidad, lo haremos como una secuencia de pasos.
-
-                // 2. Verificación de stock para TODOS los productos ANTES de tocar la BD.
+                
+                // 2. Verificación de stock antes BD.
                 boolean stockSuficiente = true;
                 for (Map.Entry<String, String> item : itemsEnCarrito.entrySet()) {
                     int productoId = Integer.parseInt(item.getKey().split(":")[1]);
@@ -59,36 +56,31 @@ public class FinalizarCompraServlet extends HttpServlet {
                     if (stockActual < cantidadDeseada) {
                         stockSuficiente = false;
                         mensaje = "No hay stock suficiente para el producto: " + productoService.obtenerProductoPorId(productoId).getNombre();
-                        break; // Salimos del bucle en cuanto encontramos un producto sin stock.
+                        break; 
                     }
                 }
 
-                // 3. Si hay stock para todo, procedemos a la venta.
+               
                 if (stockSuficiente) {
                     for (Map.Entry<String, String> item : itemsEnCarrito.entrySet()) {
                         int productoId = Integer.parseInt(item.getKey().split(":")[1]);
                         int cantidadComprada = Integer.parseInt(item.getValue());
 
-                        // Usamos el método que ya teníamos para actualizar la BD y la caché del producto.
+                        
                         productoService.realizarVenta(productoId, cantidadComprada);
                         // Le decimos a Redis que incremente el score del producto vendido
-        // en la cantidad que se compró.
         jedis.zincrby("ranking:mas_vendidos", cantidadComprada, "producto:" + productoId);
                     }
 
-                    // 4. Limpiamos el carrito del usuario en Redis
                     jedis.del(carritoKey);
 
-                    // Notificamos a todos los clientes conectados que hubo un cambio en los productos.
                     ProductoWebSocketServer.notificarActualizacion();
 
                     mensaje = "¡Compra realizada con éxito!";
                     exito = true;
                 } else {
-                    // Si no hubo stock, 'mensaje' ya fue establecido en el bucle de verificación.
                     exito = false;
                 }
-                // --- FIN DE LA TRANSACCIÓN SIMULADA ---
             }
         }
 

@@ -44,7 +44,7 @@ public class Productos implements Serializable {
     @Size(min = 1, max = 100)
     @Column(name = "nombre")
     private String nombre;
-    // @Max(value=?)  @Min(value=?)//if you know range of your decimal fields consider using these annotations to enforce field validation
+    
     @Basic(optional = false)
     @NotNull
     @Column(name = "precio")
