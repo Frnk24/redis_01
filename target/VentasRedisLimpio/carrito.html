@@ -27,17 +27,7 @@
             border-bottom: 1px solid #333;
             padding-bottom: 15px;
             margin-top: 0;
-        }
-
-        a {
-            color: #3498db;
-            text-decoration: none;
-            font-weight: 500;
-            transition: color 0.3s;
-        }
-
-        a:hover {
-            color: #5dade2;
+            margin-bottom: 25px; /* Añadido un poco más de espacio debajo del título */
         }
         
         #carrito-container {
@@ -61,7 +51,6 @@
             border-bottom: 1px solid #333;
         }
         
-        /* Fila de cabecera */
         thead tr {
             background-color: #2c2c2c;
         }
@@ -74,7 +63,6 @@
             letter-spacing: 0.5px;
         }
         
-        /* Quitar el borde de la última fila */
         tbody tr:last-child td {
             border-bottom: none;
         }
@@ -99,8 +87,8 @@
             margin-right: 20px;
         }
 
-        /* --- ESTILOS GENERALES DE BOTONES --- */
-        .btn {
+        /* --- ESTILOS GENERALES DE BOTONES Y ENLACES --- */
+        .btn, a.btn { /* Aplicamos estilos base a botones y enlaces con clase .btn */
             padding: 10px 20px;
             border: none;
             border-radius: 6px;
@@ -109,9 +97,11 @@
             font-weight: bold;
             transition: all 0.3s ease;
             margin-left: 10px;
+            text-decoration: none; /* Aseguramos que no haya subrayado */
+            display: inline-block; /* Para que el padding funcione correctamente en el enlace */
         }
 
-        .btn:hover {
+        .btn:hover, a.btn:hover {
             transform: translateY(-2px);
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
         }
@@ -143,6 +133,19 @@
             background-color: #555;
         }
 
+        /* === NUEVO ESTILO PARA EL BOTÓN OUTLINE (SEGUIR COMPRANDO) === */
+        .btn-outline {
+            background-color: transparent;
+            border: 1px solid #3498db; /* Borde con el color primario */
+            color: #3498db;            /* Texto con el color primario */
+            margin-left: 0; /* Lo reseteamos porque es el primer elemento */
+        }
+        
+        .btn-outline:hover {
+            background-color: #3498db; /* Al pasar el mouse, se rellena */
+            color: #ffffff;            /* y el texto se vuelve blanco */
+        }
+
     </style>
     <!-- === FIN DE LOS ESTILOS CSS === -->
 </head>
@@ -150,7 +153,8 @@
 
     <div class="main-container">
         <h1>Mi Carrito</h1>
-        <a href="tienda.html">‹ Seguir comprando</a>
+        <!-- CAMBIO: El enlace ahora tiene clases para estilizarlo como un botón -->
+        <a href="tienda.html" class="btn btn-outline">‹ Seguir comprando</a>
         
         <div id="carrito-container">
             <p>Cargando carrito...</p>
@@ -196,13 +200,11 @@
                             <td>S/ ${item.precio.toFixed(2)}</td>
                             <td>${item.cantidad}</td>
                             <td>S/ ${item.subtotal.toFixed(2)}</td>
-                            <!-- CAMBIO: Añadida la clase "btn btn-danger" al botón -->
                             <td><button class="btn btn-danger" onclick="eliminarItem(${item.id})">Quitar</button></td>
                         </tr>
                     `;
                 });
                 
-                // CAMBIO: Estructura mejorada para el resumen y los botones
                 tablaHTML += `
                         </tbody>
                     </table>
@@ -252,7 +254,6 @@
     }
 
     function finalizarCompra() {
-        // Encontrar el botón por su clase para deshabilitarlo
         const boton = document.querySelector('.btn-primary');
         boton.disabled = true;
         boton.textContent = 'Procesando...';
