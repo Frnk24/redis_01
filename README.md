@@ -3,7 +3,7 @@
 ### 📋 Descripción
 Sistema de comercio electrónico desarrollado bajo arquitectura **MVC Monolítica**. El proyecto se enfoca en la optimización extrema de tiempos de carga utilizando **Redis** como caché y **WebSockets** para interactividad.
 
-![Login Screen] screenshots/image.png
+![Login Screen](screenshots/image.png)
 
 ### 🚀 Stack Tecnológico
 *   **Backend:** Java EE (Servlets, Filters, WebSockets).
